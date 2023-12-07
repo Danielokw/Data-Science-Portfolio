@@ -1,0 +1,337 @@
+---
+title: "CAMPAIGN"
+author: "Daniel Okwesa"
+format: html
+editor: visual
+---
+
+# **Unveiling Voter Dynamics in Cincinnati**
+
+In this dynamic analysis of the 2021 Cincinnati City Council Election, we delve into the intricacies of voter demographics and political landscapes using a comprehensive set of data and advanced visualization techniques.
+
+```{r setup, message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+library(tidyverse)
+library(sf)
+library(readxl)
+library(RColorBrewer)
+library(tidycensus)
+```
+
+## **Data Collection and Preparation:**
+
+We kickstart our exploration by harnessing the power of the Census API (not included) and other data sources to gather detailed demographic information. This includes the white-only population, total population, and various migration patterns at the precinct level, providing a granular understanding of the local electorate.
+
+```{r}
+
+dhc.vars <- load_variables(2020, "dhc", cache = TRUE)
+acs5.vars <- load_variables(2021, "acs5")
+subject <- load_variables(2021, "acs5/subject")
+setwd("/Users/danielokwesa/Documents/04 - Base Swing maps")
+
+map2021 <- st_zm(st_read("PRECINCT2021_0311.shp"))
+
+results2021 <- read_excel("G21_Official_Canvass.xlsx", 
+    sheet = "Cincinnati", skip = 2)
+
+
+mapANDresults2021 <-
+  left_join(map2021, results2021, by = c("NAME" = "PRECINCT"))
+
+```
+
+## **Spatial Interpolation**
+
+To bridge the gap between available data points, we employ sophisticated spatial interpolation techniques. This allows us to estimate demographic figures for each voting precinct, creating a nuanced and comprehensive dataset for further analysis.
+
+```{r}
+
+blockgroups.white <- get_acs(geography = "block group", 
+                             state = "Ohio",
+                             county = "Hamilton",
+                             variables = "B02001_002", 
+                             year = 2020,
+                             geometry = TRUE
+) %>% 
+  select(white.pop = estimate)
+
+
+blockgroups.total <- get_acs(geography = "block group", 
+                             state = "Ohio",
+                             county = "Hamilton",
+                             variables = "B02001_001", 
+                             year = 2020,
+                             geometry = TRUE
+) %>% 
+  select(total.pop = estimate)
+# SAME HOUSE 1 YEAR AGO  
+sameHouse.total <- get_acs(geography = "tract", 
+                             state = "Ohio",
+                             county = "Hamilton",
+                             variables = "B07003_004", 
+                             year = 2020,
+                             geometry = TRUE
+) %>% 
+  select(sameHouse = estimate)
+# MOVED WITHIN THE SAME COUNTY
+sameCounty.total <- get_acs(geography = "tract", 
+                             state = "Ohio",
+                             county = "Hamilton",
+                             variables = "B07003_007", 
+                             year = 2020,
+                             geometry = TRUE
+) %>% 
+  select(sameCounty = estimate)
+# MOVED FROM DIFFERENT COUNTY
+diffCounty.total <- get_acs(geography = "tract", 
+                             state = "Ohio",
+                             county = "Hamilton",
+                             variables = "B07003_010", 
+                             year = 2020,
+                             geometry = TRUE
+) %>% 
+  select(diffCounty = estimate)
+
+# MOVED FROM DIFFERENT STATE
+diffState.total <- get_acs(geography = "tract", 
+                             state = "Ohio",
+                             county = "Hamilton",
+                             variables = "B07003_013", 
+                             year = 2020,
+                             geometry = TRUE
+) %>% 
+  select(diffState = estimate)
+
+# MOVED FROM DIFFERENT COUNTRY
+diffCountry.total <- get_acs(geography = "tract", 
+                             state = "Ohio",
+                             county = "Hamilton",
+                             variables = "B07003_016", 
+                             year = 2020,
+                             geometry = TRUE
+) %>% 
+  select(diffCountry = estimate)
+block.total <- get_decennial(geography = "block", 
+                 state = "Ohio",
+                 county = "Hamilton",
+                 variables = "P1_001N", 
+                 year = 2020,
+                 sumfile = "dhc",
+                 geometry = TRUE) %>% 
+  select(total.pop = value)
+
+```
+
+```{r}
+precincts.white <- interpolate_pw(
+  from = st_make_valid(blockgroups.white),
+  to = st_make_valid(mapANDresults2021),
+  to_id = "NAME",
+  extensive = TRUE,
+  weights = st_make_valid(block.total),
+  weight_column = "total.pop",
+  crs = "NAD83"
+) 
+
+precincts.total <- interpolate_pw(
+  from = st_make_valid(blockgroups.total),
+  to = st_make_valid(mapANDresults2021),
+  to_id = "NAME",
+  extensive = TRUE,
+  weights = st_make_valid(block.total),
+  weight_column = "total.pop",
+  crs = "NAD83"
+) 
+
+sameHouse.total <- interpolate_pw(
+  from = st_make_valid(sameHouse.total),
+  to = st_make_valid(mapANDresults2021),
+  to_id = "NAME",
+  extensive = TRUE,
+  weights = st_make_valid(block.total),
+  weight_column = "total.pop",
+  crs = "NAD83"
+) 
+sameCounty.total <- interpolate_pw(
+  from = st_make_valid(sameCounty.total),
+  to = st_make_valid(mapANDresults2021),
+  to_id = "NAME",
+  extensive = TRUE,
+  weights = st_make_valid(block.total),
+  weight_column = "total.pop",
+  crs = "NAD83"
+) 
+diffCounty.total <- interpolate_pw(
+  from = st_make_valid(diffCounty.total),
+  to = st_make_valid(mapANDresults2021),
+  to_id = "NAME",
+  extensive = TRUE,
+  weights = st_make_valid(block.total),
+  weight_column = "total.pop",
+  crs = "NAD83"
+) 
+diffState.total <- interpolate_pw(
+  from = st_make_valid(diffState.total),
+  to = st_make_valid(mapANDresults2021),
+  to_id = "NAME",
+  extensive = TRUE,
+  weights = st_make_valid(block.total),
+  weight_column = "total.pop",
+  crs = "NAD83"
+) 
+
+diffCountry.total <- interpolate_pw(
+  from = st_make_valid(diffCountry.total),
+  to = st_make_valid(mapANDresults2021),
+  to_id = "NAME",
+  extensive = TRUE,
+  weights = st_make_valid(block.total),
+  weight_column = "total.pop",
+  crs = "NAD83"
+) 
+combined <- 
+  left_join(mapANDresults2021, st_drop_geometry(sameHouse.total), 
+            by = c("NAME" = "NAME")) %>% 
+  left_join(., st_drop_geometry(sameCounty.total), 
+            by = c("NAME" = "NAME")) %>% 
+  left_join(., st_drop_geometry(diffCounty.total), 
+            by = c("NAME" = "NAME")) %>% 
+  left_join(., st_drop_geometry(diffState.total), 
+            by = c("NAME" = "NAME")) %>% 
+  left_join(., st_drop_geometry(diffCountry.total), 
+            by = c("NAME" = "NAME")) %>% 
+  left_join(., st_drop_geometry(precincts.total), 
+            by = c("NAME" = "NAME"))
+  
+
+
+```
+
+## **Visualizing Voter Demographics**
+
+Our journey unfolds with a captivating choropleth map, revealing the distribution of the white-only population across precincts. The map not only highlights geographical disparities but also provides a visual narrative of the demographic composition in the lead-up to the election.
+
+```{r}
+combined %>% 
+  mutate(white.prop = white.pop/total.pop)   %>%
+  ggplot(aes(fill=white.prop)) +
+  geom_sf()+
+  labs(title = "White-only population", 
+       fill = "% white-only ", 
+       caption = "")
+  
+
+```
+
+## **Strategic Overlay on Open Street Map**
+
+To enhance spatial context, our visualizations are strategically overlaid on Open Street Map using the **`mapview`** package. This integration seamlessly integrates our maps with the physical geography of Cincinnati, providing a more intuitive understanding of the electoral dynamics.
+
+```{r}
+library(mapview)
+
+mapview(cincy,zcol = "baseSwing",alpha=.25)
+```
+
+## **BaseSwing Categorization**
+
+The heart of our analysis lies in the categorization of precincts into "Base," "Swing," or "Residual" based on the voting patterns. The resulting BaseSwing map paints a vivid picture of the city's political landscape, showcasing areas with a strong political base and those where the political landscape is in flux.
+
+```{r}
+combined5 <- combined5 %>% 
+  mutate(percentReggie = `Reggie         Harris`/`BALLOTS CAST TOTAL`)
+  
+combined5 %>%
+  ggplot(aes(x = percentReggie, fill = percentReggie)) +
+  geom_histogram() 
+  
+
+```
+
+## **Highlighting Strong Bases and Swing Areas**
+
+The beauty of our analysis lies in its ability to spotlight areas with a robust political base and those undergoing significant swings. A closer look at the histogram of the variable **`percentReggie`** emphasizes the prevalence of swing areas, contributing to the vibrant electoral landscape.
+
+```{r}
+combined5 <- combined5 %>% mutate(baseSwing =
+                       if_else(percentReggie < 0.45, "residual", 
+                               if_else(percentReggie < 0.55, "swing", "base")) )
+```
+
+```{r}
+
+filtered_data <- combined5 %>%
+  filter(grepl(" CIN ", NAME))
+
+# Create the baseSwing map
+base_swing_map <- filtered_data %>%
+  ggplot(aes(fill = baseSwing)) +
+  geom_sf() +
+  labs(
+    title = "BaseSwing Map for 2021 Cincinnati City Council Election",
+    subtitle = "Reggie Harris",
+    fill = "Base/Swing Category",
+    caption = ""
+  ) +
+  scale_fill_manual(
+    values = c("residual" = "red", "swing" = "yellow", "base" = "blue", "NA" = "grey")
+  )
+print(base_swing_map)
+
+```
+
+```{r}
+combined5 <- combined5 %>% mutate(baseSwing =
+  if_else(percentReggie < 0.45, "residual", 
+    if_else(percentReggie <= 0.55, "swing", "base")))
+
+cincy <- combined5 %>%
+  filter(grepl(' CIN ',NAME)) 
+
+mybase <- cincy %>% 
+  filter(percentReggie>0.55)
+
+myswing <- cincy %>% 
+  filter(percentReggie<=0.55 & percentReggie >= .45)
+
+cincy %>% 
+  ggplot(aes())+
+  geom_sf()+
+  geom_sf(mapping=aes(fill=percentReggie),data=mybase)+
+  scale_fill_gradient(
+    low = "white",
+    high = "blue",  
+    na.value = "transparent")+
+  theme_bw()+
+ labs(
+    title = "Base Map for 2021 Cincinnati City Council Election",
+    subtitle = "Reggie Harris",
+    fill = "Base",
+    caption = ""
+  ) 
+
+cincy %>% 
+  ggplot(aes())+
+  geom_sf()+
+  geom_sf(mapping=aes(fill=percentReggie),data=myswing)+
+  scale_fill_gradient(
+    low = "white",
+    high = "red",  
+    na.value = "transparent")+
+  theme_bw()+
+ labs(
+    title = "Swing Map for 2021 Cincinnati City Council Election",
+    subtitle = "Reggie Harris",
+    fill = "Swing",
+    caption = ""
+  ) 
+```
+
+**Conclusion:**
+As we traverse through the visualizations, it becomes evident that this analysis is not merely about numbers; it's a captivating narrative of Cincinnati's political heartbeat. The interplay of demographic data and voting patterns unravels a story of diverse communities and evolving political landscapes, setting the stage for future explorations into the dynamics of civic engagement.
+
+This analysis serves as a powerful tool for policymakers, political strategists, and residents alike, offering insights that extend beyond the boundaries of traditional electoral analyses.
