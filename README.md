@@ -25,7 +25,7 @@ I designed and crafted dynamic maps that illustrated Base, Swing, and Residual r
 [Data Wrangling](https://github.com/Danielokw/Data-Science-Portfolio/blob/main/CAMPAIGN.qmd)
 
 ## Class Activites 
-This session consists of the activities done in class from data wrangling to published documents using Rpubs.
+The fllowing links contains some of the activities done in class from data wrangling to published documents using Rpubs.
 ### Spotify 
 [Published Document](https://rpubs.com/Danielok/Spotify_rocks)
 
