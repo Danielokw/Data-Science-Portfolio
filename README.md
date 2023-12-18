@@ -31,13 +31,18 @@ Links:
 ## Class Activites 
 The fllowing links contains some of the activities done in class from data wrangling to published documents using Rpubs:
  Spotify 
+ 
 [Published Document](https://rpubs.com/Danielok/Spotify_rocks)
 
 [Data Wrangling](https://github.com/Danielokw/Data-Science-Portfolio/blob/main/Spotify_rocks%20(4).qmd)
+
 Soccer
+
 [Published Document](https://rpubs.com/Danielok/top100)
 
 [Data Wrangling](https://github.com/Danielokw/Data-Science-Portfolio/blob/main/Top%20100%20Soccer%20Player%20in%20the%20Year%202022.qmd)
+
  Heart Disease
+ 
 [Published Document](https://rpubs.com/Danielok/Heart_Disease)
 
