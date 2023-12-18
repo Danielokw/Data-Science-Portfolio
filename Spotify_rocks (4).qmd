@@ -1,0 +1,65 @@
+---
+title: "Spotify"
+author: "Daniel Okwesa"
+format: html
+editor: visual
+---
+
+## Spotify Explanation
+
+Spotify is a popular music streaming platform that allows users to listen to a vast library of songs and podcasts over the internet. It offers both free and premium subscription options. Users can search for and play specific songs, create playlists, discover new music through personalized recommendations, and follow their favorite artists.
+
+```{r}
+#| label: setup
+
+library(tidyverse) # All the tidy things
+library(jsonlite)  # Converting json data into data frames
+library(magrittr)  # Extracting items from list objects using piping grammar
+library(spotifyr)
+```
+
+## Setting up Client ID and Secret
+
+-   Log in to your Spotify account (Create an account if you don't have one).
+
+-   Go to this link: <https://developer.spotify.com/dashboard>.
+
+-   If you don't have an app, you'll need to create one.
+
+-   After creating the app, return to the dashboard, and click on the newly created app
+
+-   Click on "Settings" to find your client ID and client secret.
+
+```{r}
+#| label: Client ID and Secret 
+#| include: FALSE
+Sys.setenv(SPOTIFY_CLIENT_ID = "cdcca7f6cad44a2f9505e329befbd9fc")
+Sys.setenv(SPOTIFY_CLIENT_SECRET = "cc4dce8028be46b98dea17982eefce01")
+
+auth <- 
+get_spotify_authorization_code(
+client_id = ("cdcca7f6cad44a2f9505e329befbd9fc"),
+client_secret = ("cc4dce8028be46b98dea17982eefce01"),
+scope = scopes()[c(7,8,14,15)]
+)
+```
+
+## Demonstration
+
+I've decided to create a visual representation to determine which of Burna Boy's albums has the highest danceability. The visualization I decided to use is a boxplot.
+
+```{r}
+#| label: Demonstration 
+#| include: TRUE
+
+burna <- 
+  get_artist_audio_features("Burna Boy")
+
+burna %>% 
+  group_by(album_name) %>% 
+  ggplot(aes(x = album_name, y = danceability, fill = album_name))+
+  geom_boxplot()+
+  labs(title = "Danceability Comparison Across Burna Boy's Albums")
+  
+  
+```

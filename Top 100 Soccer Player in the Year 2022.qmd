@@ -1,0 +1,99 @@
+---
+title: "Top 100 Soccer Player in the Year 2022"
+format: html
+author: Daniel Okwesa
+editor: visual
+toc: true                   # Generates an automatic table of
+execute:
+  warning: FALSE            # Prevent all warnings from displaying in the output.
+  message: FALSE            # Prevent all messages from displaying in the output.
+  echo:    FALSE            # Prevent all code from displaying in the
+---
+
+## Introduction
+
+2012 was a notable year for football, with Cristiano Ronaldo, Lionel Messi, and Neymar showcasing their skills at the peak of their abilities. While Cristiano Ronaldo is Portuguese and Lionel Messi is Argentine, Neymar is Brazilian. This got me curious to know which country produced the most notable players in the year of 2012.
+
+## Approach to Addressing the Question
+
+I plan to answer this question by scraping the information from [theGuardian News](https://www.theguardian.com/football/datablog/2012/dec/24/world-best-footballers-top-100-list) the reason being because the information gotten from that table contains data all through the year of 2012 until December 20th.
+
+```{r}
+#| label: Loading Packages
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+#| label: Loading Dataset 
+football<- read_csv("https://myxavier-my.sharepoint.com/:x:/g/personal/okwesad_xavier_edu/EZiERV6bR4VKjvK0umqQ08kBpNw2Q44RZCwDfhZob4Zz_A?download=1")
+
+```
+
+## Data Wrangling 
+
+\
+When I received my dataset, I encountered a few issues that needed addressing, one of which was related to the data type of the "Age at Dec. 20, 2012" vector. Initially stored as a character, I had to change it to a numeric data type for proper analysis.
+
+```{r}
+#| label: Data Wrangling 
+
+football$...1<- NULL
+football<- football[-c(1), ]
+
+football <- football %>% 
+  mutate(Age.at.Dec.20.2012 = as.numeric(Age.at.Dec.20.2012))
+```
+
+```{r}
+#| label: Some Graphs
+football %>% 
+  ggplot(aes(x = Nationality))+
+  geom_bar (stat = "count")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  labs(title = "Distribution of Nationalities of the top 100 footballer in the Year 2012")
+  
+```
+
+```{r}
+#| label: 2nd Graph
+football %>% 
+  ggplot(aes(x = Club, y = Age.at.Dec.20.2012))+
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  labs(title = "Distribution of Ages in Football Clubs (as of Dec. 20, 2012)")
+  
+```
+
+```{r}
+#| label: 3rd Graph 
+football %>% 
+  ggplot(aes(x = Position))+
+  geom_bar(stat = "count")+
+  labs(title = "Distribution of Position in top 100 Football Players in the year 2012")+
+  theme_bw()
+  
+```
+```{r}
+#| label: 4th Graph
+football %>% 
+  ggplot(aes(x = Nationality, y = Age.at.Dec.20.2012))+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_boxplot()
+
+  
+```
+```{r}
+#| label: 5th Graph 
+
+football %>% 
+  ggplot(aes(x = Position, y =Age.at.Dec.20.2012))+
+  geom_boxplot()+
+  labs(title = "Distribution of player in the top 100 based on Age and Position Played")
+
+```
+
+## Conclusion 
+
+The analysis of the 2012 top 100 football players graph reveals several key findings. Spain notably contributed the highest number of players, showcasing its prominence in that year. Team dynamics play a crucial role, with Borussia Dortmund standing out for having the youngest average age, while Juventus fielded the oldest players. Interestingly, older players tend to assume less active roles, such as goalkeepers and defenders, hinting at evolving player roles with age. On the international front, Colombia boasts the youngest average age among its top 100 players, while Ivory Coast features the oldest. Moreover, midfielders dominate the positions represented in the top 100, highlighting their pivotal role during that period.
